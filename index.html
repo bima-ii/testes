@@ -320,11 +320,10 @@
         <div class="date-container" id="date">Memuat tanggal...</div>
     </div>
 
-    <!-- Dropdown Karyawan -->
     <div class="form-group">
-        <label for="nama-karyawan">Pilih Nama Karyawan</label>
+        <label for="nama-karyawan">Pilih ID & Nama Karyawan</label>
         <select id="nama-karyawan">
-            <option value="">-- Pilih Nama Anda --</option>
+            <option value="">-- Pilih Identitas Anda --</option>
         </select>
     </div>
 
@@ -474,14 +473,19 @@
                 if (result.batasPulang) settingBatasPulang = result.batasPulang;
                 if (result.hariLibur) settingHariLibur = result.hariLibur;
                 
-                result.data.forEach(name => {
+                result.data.forEach(item => {
                     const opt = document.createElement('option');
-                    opt.value = name;
-                    opt.textContent = name;
+                    // Simpan JSON ke dalam value agar bisa di ekstrak ID dan Nama saat dikirim
+                    opt.value = JSON.stringify({id: item.id, nama: item.nama});
+                    if(item.id === "-") {
+                        opt.textContent = `${item.nama}`;
+                    } else {
+                        opt.textContent = `${item.id} - ${item.nama}`;
+                    }
                     selectNama.appendChild(opt);
                 });
             } else {
-                showToast("Server Error: " + result.error, "error");
+                showToast(result.error || "Gagal memuat list karyawan", "error");
             }
         } catch (error) {
             console.error("Fetch Data Karyawan Gagal:", error);
@@ -612,9 +616,20 @@
             }
         }
         
+        // Deteksi ID dan Nama terpilih
+        const selectedVal = selectNama.value;
+        let pIdKaryawan = "-";
+        let pNama = selectedVal;
+        try {
+            const parsed = JSON.parse(selectedVal);
+            pIdKaryawan = parsed.id;
+            pNama = parsed.nama;
+        } catch(e) { } // Untuk format backward compatibility
+        
         const payload = {
             action: "simpanAbsensi",
-            nama: selectNama.value,
+            idKaryawan: pIdKaryawan,
+            nama: pNama,
             status: status,
             fotoBase64: base64Photo,
             latitude: userLat,
@@ -636,11 +651,11 @@
                 showToast(`Sukses! ${result.nama} - Absen ${result.status} pukul ${result.jam}`, 'success');
                 setTimeout(() => location.reload(), 3000); // Reload halaman reset status 
             } else {
-                showToast("Error dari Apps Script: " + (result.error || "Terjadi kesalahan"), "error");
+                showToast(result.error || "Terjadi kesalahan sistem", "error");
             }
         } catch (error) {
             console.error("Submit Error:", error);
-            showToast("Terdapat kendala koneksi ke server.", "error");
+            showToast("Tindak lanjut gagal! Cek sinyal internet Anda.", "error");
         } finally {
             hideLoading();
         }
