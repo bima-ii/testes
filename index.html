@@ -384,6 +384,8 @@
     let base64Photo = null;
     let userLat = null;
     let userLng = null;
+    let settingBatasPulang = "";
+    let settingHariLibur = "";
 
     // DOM ELEMENTS
     const clockEl = document.getElementById('clock');
@@ -468,6 +470,10 @@
             const result = await res.json();
 
             if (result.success) {
+                // Simpan pengaturan dari server
+                if (result.batasPulang) settingBatasPulang = result.batasPulang;
+                if (result.hariLibur) settingHariLibur = result.hariLibur;
+                
                 result.data.forEach(name => {
                     const opt = document.createElement('option');
                     opt.value = name;
@@ -585,6 +591,26 @@
 
     async function sendAbsensi(status) {
         if (btnMasuk.disabled && btnPulang.disabled) return;
+        
+        // Pencegahan UI jika hari ini hari libur
+        if (settingHariLibur !== "") {
+            const arrHari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+            const hariIni = arrHari[new Date().getDay()];
+            if (settingHariLibur.toLowerCase().includes(hariIni.toLowerCase())) {
+                showToast(`Tidak bisa absen! Hari ini (${hariIni}) adalah hari libur.`, 'error');
+                return;
+            }
+        }
+        
+        // Pencegahan UI langsung jika belum waktunya pulang
+        if (status === "Pulang" && settingBatasPulang !== "") {
+            const now = new Date();
+            const currHm = now.toLocaleTimeString('id-ID', {timeZone: 'Asia/Jakarta', hour12: false, hour: '2-digit', minute: '2-digit'}).replace(/\./g, ':');
+            if (currHm < settingBatasPulang) {
+                showToast(`Belum masuk jam pulang. Silakan tunggu jam ${settingBatasPulang}`, 'error');
+                return;
+            }
+        }
         
         const payload = {
             action: "simpanAbsensi",
