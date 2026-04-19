@@ -475,11 +475,11 @@
                     selectNama.appendChild(opt);
                 });
             } else {
-                throw new Error(result.error);
+                showToast("Server Error: " + result.error, "error");
             }
         } catch (error) {
             console.error("Fetch Data Karyawan Gagal:", error);
-            showToast("Pastikan Apps Script sudah di-deploy dengan akses Anyone", "error");
+            showToast("Gagal koneksi. Pastikan URL Apps Script benar.", "error");
         } finally {
             hideLoading();
         }
@@ -600,7 +600,7 @@
         try {
             const res = await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify(payload)
             });
             
@@ -610,11 +610,11 @@
                 showToast(`Sukses! ${result.nama} - Absen ${result.status} pukul ${result.jam}`, 'success');
                 setTimeout(() => location.reload(), 3000); // Reload halaman reset status 
             } else {
-                throw new Error(result.error || "Terjadi kesalahan server dari script");
+                showToast("Error dari Apps Script: " + (result.error || "Terjadi kesalahan"), "error");
             }
         } catch (error) {
             console.error("Submit Error:", error);
-            showToast("Gagal menyimpan absensi. Pastikan Apps Script sudah de-deploy dengan akses Anyone.", "error");
+            showToast("Terdapat kendala koneksi ke server.", "error");
         } finally {
             hideLoading();
         }
